@@ -10,6 +10,7 @@ This attribute is located in main.py in the class Game, on line 18.
 Word lists sourced from https://github.com/first20hours/google-10000-english
 
 
+
 Current run statistics (10,000 trials):
 
 Average word length: 6.32
