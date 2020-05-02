@@ -39,7 +39,7 @@ class Game:
         output = ""
         for c in self.result:
             output += c + " "
-        print(output)
+        print("\n",output,"\n")
 
     def run(self):
         while(self.playing):
@@ -84,19 +84,21 @@ class Game:
                 if self.result[i] == last_correct:
                     last_correct_positions.append(i)
 
-            print(last_correct)
-            print(last_correct_positions)
-
-            new_possibles = self.possibles.copy()
+            new_possibles = []
             for word in self.possibles:
+                keepWord = True
                 for pos in last_correct_positions:
                     if not word[pos] == last_correct:
-                        print("Removing...", word)
-                        new_possibles.remove(word)
-                        break
+                        keepWord = False
+
+                if keepWord:
                     print("Keeping...", word)
+                    new_possibles.append(word)
+                else:
+                    print("Removing...", word)
 
             self.possibles = new_possibles
+            print(len(self.possibles), " words remaining")
 
         # find most common letter among remaining possible words
         checkstring = ""
@@ -108,7 +110,7 @@ class Game:
         all_guesses = Counter(checkstring).most_common()
         print(all_guesses)
         self.new_guess = all_guesses[0][0]
-        print(self.new_guess)
+        print("Guessing:", self.new_guess)
 
     def end_guess(self):
         self.guesses.append(self.new_guess)
