@@ -13,9 +13,10 @@ class Game:
         self.guesses = []
         self.wrong_guesses = []
         self.correct_guesses = []
+        self.possibles = []
         self.guess_count = 0
 
-        self.mode = "ai"
+        self.mode = "user"
         self.last_was_correct = False
         self.word = random.choice(self.word_list)
 
@@ -27,13 +28,9 @@ class Game:
         for x in range(len(self.word)):
             self.result.append("_")
 
-        if self.mode == "ai":
-            self.possibles = []  # array of possible words
-
         for word in self.word_list:
             if len(word) == len(self.result):
                 self.possibles.append(word)
-        print(self.possibles)
 
     def print(self):
         output = ""
@@ -127,7 +124,7 @@ class Game:
     def check_game_over(self):
         global NUM_GUESSES
         if len(self.wrong_guesses) > NUM_GUESSES:
-            print("GAME OVER: Out of guesses")
+            print("\nGAME OVER: Out of guesses")
             print("The word was: ", self.word)
             self.playing = False
         else:
@@ -136,7 +133,7 @@ class Game:
                 if x == "_":
                     done = False
             if done:
-                print("GAME OVER: You Win!")
+                print("\nGAME OVER: You Win!")
                 print("You guessed the word in ", self.guess_count, " tries with ", len(self.wrong_guesses), " wrong guesses!")
                 print("The word was: ", self.word)
                 self.playing = False
