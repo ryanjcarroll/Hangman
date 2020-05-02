@@ -2,6 +2,8 @@ import json
 import random
 from collections import Counter
 
+NUM_GUESSES = 100
+
 class Game:
     def __init__(self):
         self.word_file = open('wordlist.json')
@@ -10,12 +12,15 @@ class Game:
         self.result = []
         self.guesses = []
         self.wrong_guesses = []
+        self.correct_guesses = []
         self.guess_count = 0
 
         self.mode = "ai"
+        self.last_was_correct = False
         self.word = random.choice(self.word_list)
 
         self.playing = True
+        self.firstGuess = True
         self.get_word()
 
     def get_word(self):
@@ -43,8 +48,9 @@ class Game:
                 self.user_guess()
             elif(self.mode == "ai"):
                 self.ai_guess()
+            self.end_guess()
             self.guess_count += 1
-            self.check_end()
+            self.check_game_over()
 
     def user_guess(self):
         # take user input to guess a letter
@@ -57,30 +63,42 @@ class Game:
                 info += guess + " "
             print(info)
 
-            new_guess = input('Guess a Letter: ')[0].lower()
+            self.new_guess = input('Guess a Letter: ')[0].lower()
 
             # check if guess is a letter
-            if not new_guess.isalpha():
+            if not self.new_guess.isalpha():
                 validGuess = False
             for g in self.guesses:
-                if g == new_guess:
+                if g == self.new_guess:
                     validGuess = False
 
             if not validGuess:
                 print("\nInvalid guess, please try again.")
 
-        # validate guess against the secret word
-        self.guesses.append(new_guess)
-
-        if new_guess in self.word:
-            self.string = ""
-            for i in range(len(self.word)):
-                if self.word[i] == new_guess:
-                    self.result[i] = new_guess
-        else:
-            self.wrong_guesses.append(new_guess)
-
     def ai_guess(self):
+        # eliminate words that were made invalid by the last letter guessed, if the last guess was correct
+        if self.last_was_correct:
+            last_correct = self.correct_guesses[len(self.correct_guesses) - 1]  #last correctly guessed letter
+            last_correct_positions = []     # lists the positions of the last correctly guessed letter
+            for i in range(len(self.result)):
+                if self.result[i] == last_correct:
+                    last_correct_positions.append(i)
+
+            print(last_correct)
+            print(last_correct_positions)
+
+            new_possibles = self.possibles.copy()
+            for word in self.possibles:
+                for pos in last_correct_positions:
+                    if not word[pos] == last_correct:
+                        print("Removing...", word)
+                        new_possibles.remove(word)
+                        break
+                    print("Keeping...", word)
+
+            self.possibles = new_possibles
+
+        # find most common letter among remaining possible words
         checkstring = ""
         for word in self.possibles:
             for char in word:
@@ -88,20 +106,25 @@ class Game:
                     checkstring += char
 
         all_guesses = Counter(checkstring).most_common()
-        new_guess = all_guesses[0][0]
         print(all_guesses)
+        self.new_guess = all_guesses[0][0]
+        print(self.new_guess)
 
-        self.guesses.append(new_guess)
-        if new_guess in self.word:
-            self.string = ""
+    def end_guess(self):
+        self.guesses.append(self.new_guess)
+        if self.new_guess in self.word:
+            self.correct_guesses.append(self.new_guess)
+            self.last_was_correct = True
             for i in range(len(self.word)):
-                if self.word[i] == new_guess:
-                    self.result[i] = new_guess
+                if self.word[i] == self.new_guess:
+                    self.result[i] = self.new_guess
         else:
-            self.wrong_guesses.append(new_guess)
-
-    def check_end(self):
-        if len(self.wrong_guesses) > 8:
+            self.last_was_correct = False
+            self.wrong_guesses.append(self.new_guess)
+    
+    def check_game_over(self):
+        global NUM_GUESSES
+        if len(self.wrong_guesses) > NUM_GUESSES:
             print("GAME OVER: Out of guesses")
             print("The word was: ", self.word)
             self.playing = False
@@ -112,7 +135,7 @@ class Game:
                     done = False
             if done:
                 print("GAME OVER: You Win!")
-                print("You guessed the word in ", self.guess_count, " tries!")
+                print("You guessed the word in ", self.guess_count, " tries with ", len(self.wrong_guesses), " wrong guesses!")
                 print("The word was: ", self.word)
                 self.playing = False
 
