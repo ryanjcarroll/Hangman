@@ -3,7 +3,10 @@ import random
 from collections import Counter
 
 NUM_GUESSES = 100
-NUM_ITERATIONS = 10000
+NUM_ITERATIONS = 1
+MODE = "ai"      # set this to "ai" or "user" to toggle game mode
+PRINT = True     # set to true to enable print statements. Best for user mode, small # of iterations, and debugging
+PRINT_SUMMARY = True    # set to true to display summary statements for each iteration, as well as average stats
 
 class Game:
     def __init__(self):
@@ -17,14 +20,16 @@ class Game:
         self.possibles = []
         self.guess_count = 0
 
-        self.mode = "ai"
-        self.print = False   # set to true to enable print statements. Best for user mode, small # of iterations, and debugging
+        self.mode = MODE 
+        self.print = PRINT
         self.last_was_correct = False
         self.word = random.choice(self.word_list)
 
         self.playing = True
         self.firstGuess = True
         self.get_word()
+
+        self.summary = ""
 
     def get_word(self):
         for x in range(len(self.word)):
@@ -38,7 +43,7 @@ class Game:
             if self.print:
                 print(len(self.possibles), " words remaining")
 
-    def print(self):
+    def print_current(self):
         output = ""
         for c in self.result:
             output += c + " "
@@ -47,10 +52,10 @@ class Game:
     def run(self):
         while self.playing:
             if self.print:
-                self.print()
-            if(self.mode == "user"):
+                self.print_current()
+            if self.mode == "user":
                 self.user_guess()
-            elif(self.mode == "ai"):
+            elif self.mode == "ai":
                 self.ai_guess()
             self.end_guess()
             self.guess_count += 1
@@ -132,9 +137,11 @@ class Game:
         # find most common letter among remaining possible words
         checkstring = ""
         for word in self.possibles:
+            unique_letters = ""
             for char in word:
-                if char not in self.guesses:
-                    checkstring += char
+                if char not in unique_letters and char not in self.guesses:
+                    unique_letters += char
+            checkstring += unique_letters
 
         all_guesses = Counter(checkstring).most_common()
         if self.print:
@@ -143,16 +150,23 @@ class Game:
         if self.print:
             print("Guessing:", self.new_guess)
 
+        self.summary += "\n"
+        for space in self.result:
+            self.summary += space + " "
+        self.summary += "\n Guess '" + self.new_guess + "' (occurs " + str(all_guesses[0][1]) + " times across " + str(len(self.possibles)) + " remaining words)"
+
     def end_guess(self):
         self.guesses.append(self.new_guess)
         if self.new_guess in self.word:
             self.correct_guesses.append(self.new_guess)
             self.last_was_correct = True
+            self.summary += "\nCORRECT"
             for i in range(len(self.word)):
                 if self.word[i] == self.new_guess:
                     self.result[i] = self.new_guess
         else:
             self.last_was_correct = False
+            self.summary += "\nINCORRECT"
             self.wrong_guesses.append(self.new_guess)
     
     def check_game_over(self):
@@ -175,7 +189,11 @@ class Game:
                 self.playing = False
 
     def return_results(self):
-        return self.word, self.guesses, self.correct_guesses, self.wrong_guesses
+        self.summary += "\n"
+        for space in self.result:
+            self.summary += space + " "
+        self.summary += "\n"
+        return self.word, self.guesses, self.correct_guesses, self.wrong_guesses, self.summary
 
 
 count = 0
@@ -189,14 +207,21 @@ while count < NUM_ITERATIONS:
 total_guesses = 0
 total_correct = 0
 total_incorrect = 0
+rounds = 0
+summary_string = ""
 for result in all_results:
+    rounds += 1
     total_guesses += len(result[1])
     total_correct += len(result[2])
     total_incorrect += len(result[3])
+    summary_string += result[4] + "\n"
 
-print("Total guesses: ", total_guesses)
-print("Total correct: ",  total_correct)
-print("Total incorrect:", total_incorrect)
-print("Average guesses: ", total_guesses / NUM_ITERATIONS)
-print("Average correct: ",  total_correct / NUM_ITERATIONS)
-print("Average incorrect:", total_incorrect / NUM_ITERATIONS)
+if PRINT_SUMMARY:
+    print(summary_string)
+    print("--- SUMMARY:", rounds, "ROUNDS ---")
+    print("Total guesses: ", total_guesses)
+    print("Total correct: ",  total_correct)
+    print("Total incorrect:", total_incorrect)
+    print("Average guesses: ", total_guesses / NUM_ITERATIONS)
+    print("Average correct: ",  total_correct / NUM_ITERATIONS)
+    print("Average incorrect:", total_incorrect / NUM_ITERATIONS)
